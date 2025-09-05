@@ -1,0 +1,123 @@
+esphome:
+  name: s2
+  friendly_name: s2
+
+esp32:
+  board: esp32-s2-saola-1
+  framework:
+    type: ARDUINO
+#psram:
+#  mode: quad
+#  speed: 80Mhz
+
+# Enable logging
+logger:
+psram:
+  mode: quad
+  speed: 80Mhz
+
+# Enable Home Assistant API
+api:
+  encryption:
+
+
+ota:
+  - platform: esphome
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  on_connect:
+    - component.update: my_online_image
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+
+captive_portal:
+    
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+
+font:
+  - file: 'cristall.ttf'
+    id: font_text
+    size: 30
+
+http_request:
+  verify_ssl: false
+
+# Ecran affichage local
+spi:
+  clk_pin: GPIO36
+  mosi_pin: GPIO35
+
+output:
+  - platform: ledc
+    pin: GPIO21
+    id: gpio_backlight_pwm
+sensor:
+  - platform: homeassistant
+    name: "yandex cian"
+    entity_id: 
+    attribute: entity_picture
+    id: cian
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: gpio_backlight_pwm
+    name: "Display Backlight"
+    id: back_light
+    restore_mode: RESTORE_DEFAULT_ON
+
+online_image:
+  - url: https://media.forgecdn.net/avatars/thumbnails/1001/691/64/64/638521485026009687.jpg
+    resize: 239x239
+    format: JPG
+    type: RGB565
+    id: my_online_image
+    update_interval: 1s
+#    on_download_finished:
+#      - component.update: my_online_image
+text_sensor:
+  - id: my_image_url
+    platform: homeassistant
+    entity_id: 
+    attribute: entity_picture
+    on_value:
+      - online_image.set_url:
+          id: my_online_image
+          url: !lambda return id(my_image_url).state;
+display:
+  - platform: st7789v
+    model: Custom 
+    reset_pin: GPIO4
+    dc_pin: GPIO2 
+    spi_mode: MODE3
+    width: 240
+    height: 240
+    offset_height: 0
+    offset_width: 0  
+    update_interval: 1s
+    lambda: |-
+      it.image(0, 0, id(my_online_image));
